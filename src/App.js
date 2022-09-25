@@ -1,17 +1,37 @@
-import { useState, createRef } from "react";
+import { useState, createRef, useEffect } from "react";
+import axios from "axios";
 
 export default function App() {
   const maxRef = createRef();
   const minRef = createRef();
   const amountRef = createRef();
-  const [data, setData] = useState([]);
+  const [userValue, setUserValue] = useState([]);
+  const [randomValue, setRandomValue] = useState([]);
 
-  const addNumbers = () => {
-    for (let i = 0; i < amountRef.current.value; i++) {
-      setData(data => [
-        ...data,
-        Math.floor(Math.random() * (+maxRef.current.value - +minRef.current.value + 1)) + +minRef.current.value
-      ])
+  useEffect(() => {
+    if (userValue.length) {
+      axios.post('https://api.random.org/json-rpc/4/invoke', {
+        method: 'generateIntegers',
+        jsonrpc: "2.0",
+        params: {
+          apiKey: '279c0934-2766-4615-b3c5-c15d9eddf827',
+          n: userValue[2],
+          min: userValue[0],
+          max: userValue[1]
+        },
+        id: 1
+      })
+        .then((response) => setRandomValue(response.data.result.random.data))
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }, [userValue]);
+
+  const formHendler = () => {
+
+    if (minRef.current.value !== '' && maxRef.current.value !== '' && amountRef.current.value !== '') {
+      setUserValue([minRef.current.value, maxRef.current.value, amountRef.current.value]);
     }
   }
 
@@ -25,16 +45,15 @@ export default function App() {
           <input className="btn__text" type='text' ref={maxRef} />
           <label>Введіть кількість чисел, які хочете побачити</label>
           <input className="btn__text" type='text' ref={amountRef} />
-          <input className="btn" type='button' value="Показати результат" onClick={addNumbers} />
+          <input className="btn" type='button' value="Показати результат" onClick={formHendler} />
         </form>
         <div className="result">
           <h3 className="result__title">Ваші числа:</h3>
           <div className="result__text">
-            <p>{data ? data.join(' - ') : ''}</p>
+            <p>{randomValue ? randomValue.join(' - ') : ''}</p>
           </div>
         </div>
       </div>
-
     </>
   );
 }
